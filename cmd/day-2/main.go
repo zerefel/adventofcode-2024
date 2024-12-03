@@ -7,57 +7,91 @@ import (
 	"strings"
 )
 
-func AssertSequenceSafe(seq []string) (bool, error) {
-	var trend string
-	var prevTrend string
+func AssertSequenceSafe(seq []int) bool {
+	increasing := true
+	decreasing := true
 
 	for i := 0; i < len(seq)-1; i++ {
-		num, err := strconv.Atoi(seq[i])
-		nextNum, errNextNum := strconv.Atoi(seq[i+1])
+		diff := seq[i] - seq[i+1]
 
-		if err != nil {
-			return false, err
+		if diff < 0 {
+			increasing = false
+		}
+		if diff > 0 {
+			decreasing = false
 		}
 
-		if errNextNum != nil {
-			return false, errNextNum
+		diff = int(math.Abs(float64(diff)))
+
+		if diff < 1 || diff > 3 {
+			return false
 		}
 
-		if num > nextNum {
-			trend = "desc"
-		} else {
-			trend = "asc"
-		}
-
-		diff := math.Abs(float64(num) - float64(nextNum))
-
-		if trend != "" && prevTrend != "" && trend != prevTrend {
-			return false, nil
-		}
-
-		prevTrend = trend
-
-		if diff > 0 && diff < 4 {
-			continue
-		}
-
-		return false, nil
 	}
 
-	return true, nil
+	return increasing || decreasing
 }
 
-func CountSafeReports(data []string) (int, error) {
-	totalSafeCount := 0
+func ParseSequence(data []string) (sequence [][]int, err error) {
+	sequence = make([][]int, len(data))
 
-	for _, v := range data {
+	for i, v := range data {
 		numParts := strings.Split(v, " ")
+		sequence[i] = make([]int, len(numParts))
 
-		safe, err := AssertSequenceSafe(numParts)
+		for j := 0; j < len(numParts); j++ {
+			sequence[i][j], err = strconv.Atoi(numParts[j])
+		}
+
+	}
+
+	return
+}
+
+func RunDampenerSequence(seq []int) (safe bool, err error) {
+	safe = false
+
+	for j := 1; j < len(seq); j++ {
+		fmt.Println("original seq: ", seq)
+		amendedSeq := make([]int, len(seq)-1)
+		copy(amendedSeq, seq[:j])
+		copy(amendedSeq[j:], seq[j+1:])
+
+		if AssertSequenceSafe(amendedSeq) {
+			safe = true
+			return
+		}
+	}
+
+	return
+}
+
+// 2 7 3 4 5 6 -> remove index [1] == SAFE, diff buster
+// 2 3 2 5 6 7 -> remove index [2] == SAFE, trend buster
+
+func CountSafeReports(data []string, enableDampener bool) (int, error) {
+	totalSafeCount := 0
+	sequences, err := ParseSequence(data)
+
+	if err != nil {
+		return 0, err
+	}
+	for _, seq := range sequences {
+		safe := AssertSequenceSafe(seq)
 
 		if err != nil {
 			return 0, err
 		}
+
+		if enableDampener && !safe {
+			safe, err = RunDampenerSequence(seq)
+
+			if err != nil {
+				return 0, err
+			}
+		}
+
+		// fmt.Println(v, "safe: ", safe, "remove ind: ", removeIndex)
 
 		if safe {
 			totalSafeCount++
@@ -1072,5 +1106,15 @@ func main() {
 		"66 67 68 71 72 75",
 	}
 
-	fmt.Println(CountSafeReports(data))
+	// testData := []string{
+	// 	"7 6 4 2 1",
+	// 	"1 2 7 8 9",
+	// 	"9 7 6 2 1",
+	// 	"1 3 2 4 5",
+	// 	"8 6 4 4 1",
+	// 	"1 3 6 7 9",
+	// }
+
+	// fmt.Println(CountSafeReports(data, false))
+	fmt.Println(CountSafeReports(data, true))
 }
