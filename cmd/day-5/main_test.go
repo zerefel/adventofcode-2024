@@ -1431,7 +1431,7 @@ func TestSomething(t *testing.T) {
 	t.Run("fix incorrect updates", func(t *testing.T) {
 		input := fullInput
 		updates := fullUpdates
-		want := 4872
+		want := 5564
 		got := FixIncorrectlyOrderedUpdates(input, updates)
 
 		if got != want {

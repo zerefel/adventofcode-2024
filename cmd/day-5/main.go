@@ -56,8 +56,6 @@ func fixIncorrectUpdate(update []int, rules []map[int]int) []int {
 		swapped = false
 
 		for i := 0; i < len(update); i++ {
-			// num := update[i]
-
 			for _, rule := range rules {
 				for left, right := range rule {
 					leftIndex := slices.Index(update, left)
